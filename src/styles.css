@@ -104,3 +104,29 @@
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--ember) 30%, transparent),
               0 0 24px -4px color-mix(in oklab, var(--ember) 40%, transparent);
 }
+
+:root {
+  /* Single standardized motion curve + duration reused across the page */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-standard: 240ms;
+}
+
+/* Apply the standard easing/duration to every CSS transition on the page
+   so hovers/colors feel consistent without touching every component. */
+*,
+*::before,
+*::after {
+  transition-timing-function: var(--ease-standard);
+  transition-duration: var(--dur-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
