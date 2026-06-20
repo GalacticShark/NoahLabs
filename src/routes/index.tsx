@@ -119,7 +119,6 @@ function Nav() {
 }
 
 function Hero() {
-function Hero() {
   const stats: Array<[React.ReactNode, string]> = [
     [<><Counter value={9} suffix="×" /></>, "Faster R&D → ATO"],
     ["2–15×", "Engineer output"],
