@@ -346,13 +346,14 @@ function DeploymentTerminal({ mode }: { mode: string }) {
 
 function Deployment() {
   const modes = [
-    { name: "SaaS",        body: "Fully managed control plane on commercial AWS · GCP." },
-    { name: "Hybrid",      body: "Our control plane, your compute. Source never leaves your VPC." },
-    { name: "On-Prem",     body: "Entirely inside your data center. Mirrored deps, no outbound DNS." },
-    { name: "Air-Gapped",  body: "Disconnected facilities. Updates via signed offline media." },
-    { name: "Classified",  body: "DISA Impact Level 6 · National Security Regions · SCIF-resident." },
+    { name: "SaaS",        file: "saas.yaml",        body: "Fully managed control plane on commercial AWS · GCP." },
+    { name: "Hybrid",      file: "hybrid.yaml",      body: "Our control plane, your compute. Source never leaves your VPC." },
+    { name: "On-Prem",     file: "on-prem.yaml",     body: "Entirely inside your data center. Mirrored deps, no outbound DNS." },
+    { name: "Air-Gapped",  file: "air-gapped.yaml",  body: "Disconnected facilities. Updates via signed offline media." },
+    { name: "Classified",  file: "classified.yaml",  body: "DISA Impact Level 6 · National Security Regions · SCIF-resident." },
   ];
   const [active, setActive] = useState("Classified");
+  const activeMode = modes.find((m) => m.name === active)!;
   const reduced = useReducedMotion();
   return (
     <section id="deployment" className="surface-panel border-b border-border">
@@ -377,73 +378,176 @@ function Deployment() {
           ))}
         </div>
 
-        <div className="mt-14 grid lg:grid-cols-[280px_1fr] gap-px bg-border hairline rounded-sm overflow-hidden">
-          {/* Quiet list of modes — active/inactive design preserved exactly */}
-          <ul className="surface-base">
-            {modes.map((m) => {
-              const isActive = active === m.name;
-              return (
-                <li key={m.name}>
-                  <button
-                    type="button"
-                    onClick={() => setActive(m.name)}
-                    className={`w-full text-left px-5 py-4 border-b border-border last:border-b-0 flex items-center gap-3 transition-colors ${
-                      isActive ? "surface-elevated" : "hover:bg-card/40"
-                    }`}
-                    style={isActive ? { boxShadow: "inset 2px 0 0 var(--ember)" } : undefined}
-                  >
-                    <span
-                      className={`font-mono text-[10px] tracking-[0.16em] w-5 ${
-                        isActive ? "ember-text" : "text-muted-foreground/60"
-                      }`}
-                    >
-                      0{modes.indexOf(m) + 1}
-                    </span>
-                    <span
-                      className={`text-sm font-medium ${
-                        isActive ? "text-foreground" : "text-muted-foreground"
-                      }`}
-                    >
-                      {m.name}
-                    </span>
-                    {isActive && (
-                      <motion.span
-                        layoutId="dep-dot"
-                        className="ml-auto h-1.5 w-1.5 rounded-full bg-ember"
-                      />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+        {/* IDE-style frame */}
+        <div className="mt-14 hairline rounded-sm overflow-hidden surface-base">
+          {/* Title bar */}
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card/40">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-border" />
+              <span className="h-2.5 w-2.5 rounded-full bg-border" />
+              <span className="h-2.5 w-2.5 rounded-full bg-ember" />
+            </div>
+            <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
+              sentinel — deployments / {activeMode.file}
+            </span>
+            <span className="font-mono text-[10px] text-muted-foreground/60">⌘K</span>
+          </div>
 
-          {/* Expanded detail */}
-          <div className="surface-elevated p-7 md:p-9">
-            <div className="flex items-start justify-between gap-6 flex-wrap">
-              <div>
-                <Mono className="text-muted-foreground">active deployment</Mono>
-                <h3 className="mt-2 text-3xl font-semibold tracking-tight">{active}</h3>
-                <p className="mt-3 max-w-md text-sm text-muted-foreground leading-relaxed">
-                  {modes.find((m) => m.name === active)?.body}
-                </p>
-              </div>
-              {/* The single pulsing status dot on the page lives here — the
-                  functionally meaningful "attested" badge. Capped to 3 pulses. */}
-              <div className="flex items-center gap-2 hairline rounded-sm px-3 py-1.5">
-                <motion.span
-                  className="h-1.5 w-1.5 rounded-full bg-ember"
-                  animate={reduced ? { opacity: 1 } : { opacity: [1, 0.3, 1, 0.3, 1] }}
-                  transition={{ duration: 1.6, repeat: 2, ease: EASE_STANDARD }}
+          <div className="grid lg:grid-cols-[44px_240px_1fr]">
+            {/* Activity bar */}
+            <div className="hidden lg:flex flex-col items-center gap-4 py-4 border-r border-border bg-card/20">
+              {[FileCode2, SearchIcon, GitBranch, SettingsIcon].map((I, idx) => (
+                <I
+                  key={idx}
+                  className={`h-4 w-4 ${idx === 0 ? "text-foreground" : "text-muted-foreground/60 hover:text-foreground transition-colors"}`}
+                  strokeWidth={1.5}
                 />
-                <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
-                  attested · {active === "Classified" ? "IL6" : "verified"}
-                </span>
-              </div>
+              ))}
             </div>
 
-            <div className="mt-6">
-              <DeploymentTerminal mode={active} />
+            {/* File explorer / sidebar — keeps active/inactive design */}
+            <div className="border-r border-border bg-card/10">
+              <div className="px-4 py-2 border-b border-border flex items-center gap-1.5">
+                <ChevronRight className="h-3 w-3 text-muted-foreground" strokeWidth={2} />
+                <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
+                  deployments
+                </span>
+              </div>
+              <ul>
+                {modes.map((m, idx) => {
+                  const isActive = active === m.name;
+                  return (
+                    <li key={m.name}>
+                      <button
+                        type="button"
+                        onClick={() => setActive(m.name)}
+                        className={`w-full text-left pl-6 pr-4 py-2 flex items-center gap-2 transition-colors ${
+                          isActive ? "surface-elevated" : "hover:bg-card/40"
+                        }`}
+                        style={isActive ? { boxShadow: "inset 2px 0 0 var(--ember)" } : undefined}
+                      >
+                        <FileCode2
+                          className={`h-3.5 w-3.5 ${isActive ? "ember-text" : "text-muted-foreground/60"}`}
+                          strokeWidth={1.5}
+                        />
+                        <span
+                          className={`font-mono text-[12px] ${
+                            isActive ? "text-foreground" : "text-muted-foreground"
+                          }`}
+                        >
+                          {m.file}
+                        </span>
+                        <span
+                          className={`ml-auto font-mono text-[9px] tracking-[0.14em] ${
+                            isActive ? "ember-text" : "text-muted-foreground/50"
+                          }`}
+                        >
+                          0{idx + 1}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            {/* Editor area */}
+            <div className="surface-elevated min-w-0">
+              {/* Tab strip */}
+              <div className="flex items-end border-b border-border bg-card/20 overflow-x-auto">
+                {modes
+                  .filter((m) => m.name === active)
+                  .map((m) => (
+                    <div
+                      key={m.name}
+                      className="flex items-center gap-2 px-4 py-2 border-r border-border surface-elevated"
+                      style={{ boxShadow: "inset 0 2px 0 var(--ember)" }}
+                    >
+                      <FileCode2 className="h-3.5 w-3.5 ember-text" strokeWidth={1.5} />
+                      <span className="font-mono text-[12px] text-foreground">{m.file}</span>
+                      <XIcon className="h-3 w-3 text-muted-foreground/60 hover:text-foreground transition-colors" strokeWidth={1.5} />
+                    </div>
+                  ))}
+                <div className="ml-auto flex items-center gap-2 px-3 hairline-l">
+                  <motion.span
+                    className="h-1.5 w-1.5 rounded-full bg-ember"
+                    animate={reduced ? { opacity: 1 } : { opacity: [1, 0.3, 1, 0.3, 1] }}
+                    transition={{ duration: 1.6, repeat: 2, ease: EASE_STANDARD }}
+                  />
+                  <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
+                    attested · {active === "Classified" ? "IL6" : "verified"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Editor body */}
+              <div className="grid md:grid-cols-[auto_1fr] font-mono text-[12.5px] leading-6">
+                {/* Gutter */}
+                <div aria-hidden className="hidden md:flex flex-col items-end pr-3 pl-3 py-5 text-muted-foreground/40 border-r border-border select-none">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <span key={i}>{i + 1}</span>
+                  ))}
+                </div>
+                <div className="p-5">
+                  <div className="text-muted-foreground/70">
+                    <span className="text-muted-foreground/40"># {activeMode.file}</span>
+                  </div>
+                  <div>
+                    <span className="ember-text">deployment</span>
+                    <span className="text-muted-foreground">:</span>
+                  </div>
+                  <div className="pl-4">
+                    <span className="ember-text">name</span>
+                    <span className="text-muted-foreground">: </span>
+                    <span className="text-foreground">"{active}"</span>
+                  </div>
+                  <div className="pl-4">
+                    <span className="ember-text">summary</span>
+                    <span className="text-muted-foreground">: </span>
+                    <span className="text-foreground">|</span>
+                  </div>
+                  <div className="pl-8 text-muted-foreground">
+                    {activeMode.body}
+                  </div>
+                  <div className="pl-4 mt-1">
+                    <span className="ember-text">attestation</span>
+                    <span className="text-muted-foreground">: </span>
+                    <span className="text-foreground">{active === "Classified" ? "il6" : "verified"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Integrated terminal */}
+              <div className="border-t border-border">
+                <div className="flex items-center gap-4 px-4 py-1.5 border-b border-border bg-card/20">
+                  <span className="font-mono text-[10px] tracking-[0.18em] uppercase ember-text border-b border-ember pb-1 -mb-1">
+                    terminal
+                  </span>
+                  <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground/60">
+                    problems
+                  </span>
+                  <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-muted-foreground/60">
+                    output
+                  </span>
+                </div>
+                <div className="p-1">
+                  <DeploymentTerminal mode={active} />
+                </div>
+              </div>
+
+              {/* Status bar */}
+              <div className="flex items-center justify-between px-3 py-1 bg-ember/90 text-background font-mono text-[10px] tracking-[0.14em] uppercase">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1"><GitBranch className="h-3 w-3" strokeWidth={2} />main</span>
+                  <span>0 ⚠ · 0 ✕</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span>yaml</span>
+                  <span>utf-8</span>
+                  <span>ln 1, col 1</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
