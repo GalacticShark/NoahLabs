@@ -131,10 +131,10 @@ function Hero() {
       <div className="mx-auto max-w-[1400px] px-6 pt-24 pb-32 relative">
         <Reveal y={16}>
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-semibold tracking-tight leading-[0.95] max-w-5xl text-foreground">
-            Build Your<br />Software Factory
+            Build your<br />airgapped AI IDE
           </h1>
           <p className="mt-10 max-w-xl font-mono text-base md:text-lg text-muted-foreground leading-relaxed">
-            A self-improving system for your SDLC. Ingest continuous signals and deploy production software.
+            A context-aware system for regulated codebases. Hold your full repository live, execute against policy, and ship without a single black-box diff.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-3">
             <a href="#contact" className="inline-flex items-center gap-2 px-5 py-3 bg-foreground text-background font-mono uppercase tracking-[0.18em] text-xs rounded-sm hover:opacity-90 transition">
