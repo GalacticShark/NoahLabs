@@ -290,16 +290,40 @@ function DeploymentTerminal({ mode }: { mode: string }) {
   const lines = scripts[mode] ?? scripts.Classified;
   const reduced = useReducedMotion();
 
-  // Randomize per-line delays (40-90ms each) so output reads like real log streaming
-  // instead of a uniform animation. Recomputed when `mode` changes.
-  const delays = useMemo(() => {
-    let acc = 0;
-    return lines.map(() => {
-      acc += 0.04 + Math.random() * 0.05; // 40-90ms
-      return acc;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Real-terminal typing: each line types out char-by-char, then the next
+  // line starts. Resets whenever `mode` changes so tab switches replay.
+  const [lineIdx, setLineIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+
+  useEffect(() => {
+    setLineIdx(0);
+    setCharIdx(0);
   }, [mode]);
+
+  useEffect(() => {
+    if (reduced) return;
+    if (lineIdx >= lines.length) return;
+    const current = lines[lineIdx].t;
+    if (charIdx < current.length) {
+      // Command lines (start with $) type slower for emphasis; output lines stream fast.
+      const isCmd = current.startsWith("$");
+      const base = isCmd ? 22 : 6;
+      const jitter = isCmd ? 30 : 10;
+      const delay = base + Math.random() * jitter;
+      const id = setTimeout(() => setCharIdx((c) => c + 1), delay);
+      return () => clearTimeout(id);
+    }
+    // End-of-line pause before next line (longer after a command).
+    const isCmd = current.startsWith("$");
+    const pause = isCmd ? 220 : 70 + Math.random() * 90;
+    const id = setTimeout(() => {
+      setLineIdx((i) => i + 1);
+      setCharIdx(0);
+    }, pause);
+    return () => clearTimeout(id);
+  }, [lineIdx, charIdx, lines, reduced]);
+
+  const done = lineIdx >= lines.length;
 
   return (
     <div className="surface-base hairline rounded-sm overflow-hidden">
@@ -318,27 +342,29 @@ function DeploymentTerminal({ mode }: { mode: string }) {
         key={mode}
         className="p-5 font-mono text-[12.5px] leading-6 text-muted-foreground"
       >
-        {lines.map((l, i) =>
-          reduced ? (
-            <div key={i} className={l.cls}>{l.t}</div>
-          ) : (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -4 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: delays[i], duration: DUR_STANDARD, ease: EASE_STANDARD }}
-              className={l.cls}
-            >
-              {l.t}
-            </motion.div>
-          ),
+        {reduced
+          ? lines.map((l, i) => (
+              <div key={i} className={l.cls}>
+                {l.t}
+              </div>
+            ))
+          : lines.slice(0, lineIdx).map((l, i) => (
+              <div key={i} className={l.cls}>
+                {l.t}
+              </div>
+            ))}
+        {!reduced && !done && (
+          <div className={lines[lineIdx].cls}>
+            {lines[lineIdx].t.slice(0, charIdx)}
+            <span className="inline-block h-3 w-1.5 bg-ember align-middle ml-0.5 animate-pulse" />
+          </div>
         )}
-        {/* Cursor blink — capped to 3 iterations, then settles visible. */}
-        <motion.div
-          className="inline-block h-3 w-1.5 bg-ember align-middle mt-1"
-          animate={reduced ? { opacity: 1 } : { opacity: [1, 0, 1, 0, 1] }}
-          transition={{ duration: 1.1, repeat: 2, ease: EASE_STANDARD }}
-        />
+        {(reduced || done) && (
+          <div className="mt-1">
+            <span className="text-ember">$</span>{" "}
+            <span className="inline-block h-3 w-1.5 bg-ember align-middle animate-pulse" />
+          </div>
+        )}
       </div>
     </div>
   );
