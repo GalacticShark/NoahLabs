@@ -456,17 +456,10 @@ function Deployment() {
 function SDLC() {
   const stages = ["PLAN", "TRIAGE", "SIGNAL", "AUTOMATE", "MONITOR", "SHIP", "VALIDATE", "EXECUTE"];
   const reduced = useReducedMotion();
-  // Pre-compute static positions on a circle. No rotation, ever.
-  const positions = stages.map((_, i) => {
-    const base = (i / stages.length) * 360 - 90;
-    const rad = (base * Math.PI) / 180;
-    return {
-      left: `${50 + Math.cos(rad) * 42}%`,
-      top: `${50 + Math.sin(rad) * 42}%`,
-      cx: 50 + Math.cos(rad) * 42,
-      cy: 50 + Math.sin(rad) * 42,
-    };
-  });
+  // Stages are evenly distributed around the ring. The whole ring rotates at a
+  // constant linear speed so each node travels the same arc-length per second
+  // and spacing between nodes is preserved.
+  const angleStep = 360 / stages.length;
   return (
     <section className="surface-base border-b border-border">
       <div className="mx-auto max-w-[1400px] px-6 py-28">
@@ -484,7 +477,7 @@ function SDLC() {
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.6, ease: EASE_STANDARD }}
         >
-          {/* Connecting lines from center to each stage + outer ring */}
+          {/* Outer dashed orbit ring (no spokes to the center) */}
           <svg
             className="absolute inset-0 h-full w-full text-border"
             viewBox="0 0 100 100"
@@ -500,18 +493,6 @@ function SDLC() {
               strokeWidth="0.2"
               strokeDasharray="0.6 1.2"
             />
-            {positions.map((p, i) => (
-              <line
-                key={i}
-                x1="50"
-                y1="50"
-                x2={p.cx}
-                y2={p.cy}
-                stroke="currentColor"
-                strokeWidth="0.2"
-                strokeDasharray="0.6 1.2"
-              />
-            ))}
           </svg>
 
           {/* Stationary center */}
@@ -522,18 +503,42 @@ function SDLC() {
             </div>
           </div>
 
-          {/* Static stage nodes — readable, no spin */}
-          {stages.map((s, i) => (
-            <div
-              key={s}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: positions[i].left, top: positions[i].top }}
-            >
-              <div className="h-20 w-20 rounded-full hairline grid place-items-center bg-background">
-                <span className="font-mono text-[10px] tracking-[0.15em] ember-text">{s}</span>
-              </div>
-            </div>
-          ))}
+          {/* Rotating ring of stages. Single transform on the wrapper guarantees
+              equal arc-length per node and constant linear angular velocity. */}
+          <motion.div
+            className="absolute inset-0"
+            animate={reduced ? { rotate: 0 } : { rotate: 360 }}
+            transition={
+              reduced
+                ? { duration: 0 }
+                : { duration: 40, ease: "linear", repeat: Infinity }
+            }
+          >
+            {stages.map((s, i) => {
+              const angle = i * angleStep - 90;
+              const rad = (angle * Math.PI) / 180;
+              const left = `${50 + Math.cos(rad) * 42}%`;
+              const top = `${50 + Math.sin(rad) * 42}%`;
+              return (
+                <motion.div
+                  key={s}
+                  className="absolute -translate-x-1/2 -translate-y-1/2"
+                  style={{ left, top }}
+                  // Counter-rotate inner content so labels stay upright.
+                  animate={reduced ? { rotate: 0 } : { rotate: -360 }}
+                  transition={
+                    reduced
+                      ? { duration: 0 }
+                      : { duration: 40, ease: "linear", repeat: Infinity }
+                  }
+                >
+                  <div className="h-20 w-20 rounded-full hairline grid place-items-center bg-background">
+                    <span className="font-mono text-[10px] tracking-[0.15em] ember-text">{s}</span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
         </motion.div>
       </div>
     </section>
