@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ShieldCheck, Cpu, GitBranch, Lock, Terminal, ArrowUpRight, Activity, FileCheck2, Network, Coins, Globe, Rocket, Code2, FileCode2, FolderOpen, Search as SearchIcon, GitBranch as GitBranchIcon, Settings as SettingsIcon, X as XIcon, ChevronRight } from "lucide-react";
+import { ShieldCheck, Cpu, GitBranch, Lock, Terminal, ArrowUpRight, Activity, FileCheck2, Network, Coins, Globe, Rocket, Code2, FileCode2, FolderOpen, Search as SearchIcon, Settings as SettingsIcon, X as XIcon, ChevronRight } from "lucide-react";
 import { motion, useInView, animate, useScroll, useSpring, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
