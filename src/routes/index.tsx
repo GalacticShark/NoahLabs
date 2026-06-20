@@ -572,18 +572,26 @@ function Partners() {
           </div>
         </Reveal>
 
-        <div className="mt-14 relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10" style={{ background: "linear-gradient(to right, oklch(0.13 0.008 240), transparent)" }} />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10" style={{ background: "linear-gradient(to left, oklch(0.13 0.008 240), transparent)" }} />
+        <div className="mt-14 relative overflow-hidden">
+          {/* Seamless infinite carousel: translate from 0 to -50% (the width of
+              one full set) and loop. Because `loop` is the partners array
+              duplicated back-to-back, -50% lands exactly on the first card of
+              the second copy, which is visually identical to 0% — so the wrap
+              is invisible and cards appear to enter from the right at the same
+              instant they exit on the left. */}
           <motion.div
-            className="flex gap-px bg-border hairline rounded-sm"
-            animate={reduced ? { x: "0%" } : { x: ["0%", "-50%", "0%"] }}
-            transition={{ duration: 30, repeat: 1, ease: "linear" }}
+            className="flex w-max"
+            animate={reduced ? { x: 0 } : { x: ["0%", "-50%"] }}
+            transition={
+              reduced
+                ? { duration: 0 }
+                : { duration: 40, ease: "linear", repeat: Infinity, repeatType: "loop" }
+            }
           >
             {loop.map((p, i) => (
               <div
                 key={i}
-                className="shrink-0 w-[320px] surface-base p-8 group hover:surface-elevated transition-colors"
+                className="shrink-0 w-[320px] surface-base p-8 group hover:surface-elevated transition-colors border-r border-border"
               >
                 <div className="flex items-start justify-between">
                   <h3 className="text-xl font-semibold tracking-tight">{p.name}</h3>
